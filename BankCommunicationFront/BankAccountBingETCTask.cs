@@ -41,7 +41,6 @@ namespace BankCommunicationFront
                 // 创建心跳
                 System.Timers.Timer _HeartBeat = new System.Timers.Timer();
                 _HeartBeat.Interval = System.Math.Abs(interval);
-                //_HeartBeat.Interval = 20000;
                 _HeartBeat.Enabled = true;
                 _HeartBeat.Elapsed += _HeartBeat_Elapsed;
                 _HeartBeat.AutoReset = false;
@@ -53,17 +52,24 @@ namespace BankCommunicationFront
         private void _HeartBeat_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
 
-            MongoDBAccess<OutPutTaskWaitingDone> mongoAccess = new MongoDBAccess<OutPutTaskWaitingDone>(SYSConstant.BANK_TASK, SYSConstant.OUTPUTTASK_WAITING_DONE);
-            List<OutPutTaskWaitingDone> waitingDoneList = mongoAccess.FindAsByWhere(p => p.TransType == 2008 && p.Status == 0, 0);
-
-            if (waitingDoneList != null && waitingDoneList.Any())
+            try
             {
-                MongoDBAccess<BankAgent> mongoBankAccess = new MongoDBAccess<BankAgent>(SYSConstant.BANK_CONFIG, SYSConstant.BANK_AGENT);
-                foreach (OutPutTaskWaitingDone waitingDone in waitingDoneList)
+                MongoDBAccess<OutPutTaskWaitingDone> mongoAccess = new MongoDBAccess<OutPutTaskWaitingDone>(SYSConstant.BANK_TASK, SYSConstant.OUTPUTTASK_WAITING_DONE);
+                List<OutPutTaskWaitingDone> waitingDoneList = mongoAccess.FindAsByWhere(p => p.TransType == 2008 && p.Status == 0, 0);
+
+                if (waitingDoneList != null && waitingDoneList.Any())
                 {
-                    BankAgent bankAgent = mongoBankAccess.FindAsByWhere(p => p.BankTag.Equals(waitingDone.BankTag), 0).FirstOrDefault();
-                    new SingleBankAccountBingETCTask(bankAgent).ProcessSingleTask(waitingDone);
+                    MongoDBAccess<BankAgent> mongoBankAccess = new MongoDBAccess<BankAgent>(SYSConstant.BANK_CONFIG, SYSConstant.BANK_AGENT);
+                    foreach (OutPutTaskWaitingDone waitingDone in waitingDoneList)
+                    {
+                        BankAgent bankAgent = mongoBankAccess.FindAsByWhere(p => p.BankTag.Equals(waitingDone.BankTag), 0).FirstOrDefault();
+                        new SingleBankAccountBingETCTask(bankAgent).ProcessSingleTask(waitingDone);
+                    }
                 }
+            }
+            catch (Exception)
+            {
+                LogMessage.GetLogInstance().LogError("银行账号与ETC卡绑定信息（2008号报文）定时发送任务异常：" + ex.ToString());
             }
         }
     }

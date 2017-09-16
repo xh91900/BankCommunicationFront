@@ -74,7 +74,7 @@ namespace BankCommunicationFront
         public static char[] sepForLine = new char[2] { '\r', '\n' };
         public static char[] sepForColumn = new char[1] { '|' };
 
-        public static int maxSizeUncompressed = 1024 * 1024 * 30; // 30MB;
+        public static int maxSizeUncompressed = 1024 * 1024 * 80; // 80MB;
 
         /// <summary>
         /// 应用配置参数集合
@@ -82,9 +82,16 @@ namespace BankCommunicationFront
         public static List<Spara> sParam;
         public static void GetParam()
         {
-            MongoDBAccess<Spara> mongoAccess = new MongoDBAccess<Spara>(SYSConstant.BANK_CONFIG, SYSConstant.S_PARA);
-            List<Spara> sPara = mongoAccess.FindAsByWhere(p => p.Key != null, 0);
-            sParam = sPara;
+            try
+            {
+                MongoDBAccess<Spara> mongoAccess = new MongoDBAccess<Spara>(SYSConstant.BANK_CONFIG, SYSConstant.S_PARA);
+                List<Spara> sPara = mongoAccess.FindAsByWhere(p => p.Key != null, 0);
+                sParam = sPara;
+            }
+            catch (Exception ex)
+            {
+                LogMessage.GetLogInstance().LogError("获取系统配置异常：" + ex.ToString());
+            }
         }
     }
 

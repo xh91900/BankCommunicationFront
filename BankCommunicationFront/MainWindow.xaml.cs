@@ -112,28 +112,42 @@ namespace BankCommunicationFront
         // 双击事件
         private void exceptionItem_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            DataGrid d = (DataGrid)sender;
-            MongoDBAccess<InPutTaskWaitingDone> dbAccess = new MongoDBAccess<InPutTaskWaitingDone>(SYSConstant.BANK_TASK, SYSConstant.INPUTTASK_WAITING_DONE);
-            var mUpDefinitionBuilder = new UpdateDefinitionBuilder<InPutTaskWaitingDone>();
-            var mUpdateDefinition = mUpDefinitionBuilder.Set(p => p.Status, 0);
-            dbAccess.UpdateDocs(p => p._id == ((ExceptionTaskWaitingDone)d.CurrentItem)._id, mUpdateDefinition);
-            exceptionCollection.Remove((ExceptionTaskWaitingDone)d.CurrentItem);
+            try
+            {
+                DataGrid d = (DataGrid)sender;
+                MongoDBAccess<InPutTaskWaitingDone> dbAccess = new MongoDBAccess<InPutTaskWaitingDone>(SYSConstant.BANK_TASK, SYSConstant.INPUTTASK_WAITING_DONE);
+                var mUpDefinitionBuilder = new UpdateDefinitionBuilder<InPutTaskWaitingDone>();
+                var mUpdateDefinition = mUpDefinitionBuilder.Set(p => p.Status, 0);
+                dbAccess.UpdateDocs(p => p._id == ((ExceptionTaskWaitingDone)d.CurrentItem)._id, mUpdateDefinition);
+                exceptionCollection.Remove((ExceptionTaskWaitingDone)d.CurrentItem);
+            }
+            catch (Exception ex)
+            {
+                LogMessage.GetLogInstance().LogError("获取处理银行批量扣款异常数据异常：" + ex.ToString());
+            }
         }
 
         // 获取处理银行批量扣款异常数据
         private void Button_GetExceptionData_Click(object sender, RoutedEventArgs e)
         {
-            MongoDBAccess<InPutTaskWaitingDone> mongoAccess = new MongoDBAccess<InPutTaskWaitingDone>(SYSConstant.BANK_TASK, SYSConstant.INPUTTASK_WAITING_DONE);
-            mongoAccess.FindAsByWhere(p => p.Status < 0, 0).ForEach(p =>
+            try
             {
-                exceptionCollection.Add(new ExceptionTaskWaitingDone() { _id = p._id, BankTag = p.BankTag, TransType = p.TransType, DbName = p.DbName, ColName = p.ColName, FileName = p.FileName, Status = p.Status, CreateTime = p.CreateTime, Remark = p.Remark, Key = p.Key, OperationType = "银行发送扣款结果包异常数据" });
-            });
+                MongoDBAccess<InPutTaskWaitingDone> mongoAccess = new MongoDBAccess<InPutTaskWaitingDone>(SYSConstant.BANK_TASK, SYSConstant.INPUTTASK_WAITING_DONE);
+                mongoAccess.FindAsByWhere(p => p.Status < 0, 0).ForEach(p =>
+                {
+                    exceptionCollection.Add(new ExceptionTaskWaitingDone() { _id = p._id, BankTag = p.BankTag, TransType = p.TransType, DbName = p.DbName, ColName = p.ColName, FileName = p.FileName, Status = p.Status, CreateTime = p.CreateTime, Remark = p.Remark, Key = p.Key, OperationType = "银行发送扣款结果包异常数据" });
+                });
 
-            MongoDBAccess<OutPutTaskWaitingDone> access = new MongoDBAccess<OutPutTaskWaitingDone>(SYSConstant.BANK_TASK, SYSConstant.INPUTTASK_WAITING_DONE);
-            access.FindAsByWhere(p => p.Status < 0, 0).ForEach(p =>
+                MongoDBAccess<OutPutTaskWaitingDone> access = new MongoDBAccess<OutPutTaskWaitingDone>(SYSConstant.BANK_TASK, SYSConstant.INPUTTASK_WAITING_DONE);
+                access.FindAsByWhere(p => p.Status < 0, 0).ForEach(p =>
+                {
+                    exceptionCollection.Add(new ExceptionTaskWaitingDone() { _id = p._id, BankTag = p.BankTag, TransType = p.TransType, DbName = p.DbName, ColName = p.ColName, FileName = p.FileName, Status = p.Status, CreateTime = p.CreateTime, Remark = p.Remark, Key = p.Key, OperationType = "结算中心发送扣款包异常数据" });
+                });
+            }
+            catch (Exception ex)
             {
-                exceptionCollection.Add(new ExceptionTaskWaitingDone() { _id = p._id, BankTag = p.BankTag, TransType = p.TransType, DbName = p.DbName, ColName = p.ColName, FileName = p.FileName, Status = p.Status, CreateTime = p.CreateTime, Remark = p.Remark, Key = p.Key, OperationType = "结算中心发送扣款包异常数据" });
-            });
+                LogMessage.GetLogInstance().LogError("获取处理银行批量扣款异常数据异常：" + ex.ToString());
+            }
         }
     }
     

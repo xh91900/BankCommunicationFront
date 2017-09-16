@@ -53,7 +53,6 @@ namespace BankCommunicationFront
                         // 创建心跳
                         System.Timers.Timer _HeartBeat = new System.Timers.Timer();
                         _HeartBeat.Interval = System.Math.Abs(interval);
-                        //_HeartBeat.Interval = 20000;
                         _HeartBeat.Enabled = true;
                         _HeartBeat.Elapsed += (p, q) =>
                         {

@@ -39,18 +39,18 @@ namespace BankCommunicationFront
             });
 
             // 2010\2012
-            //Task.Run(() =>
-            //{
-            //    CancellationAndDepositTask cadTask = new CancellationAndDepositTask();
-            //    cadTask.Start();
-            //});
+            Task.Run(() =>
+            {
+                CancellationAndDepositTask cadTask = new CancellationAndDepositTask();
+                cadTask.Start();
+            });
 
             // 2008
-            //Task.Run(() =>
-            //{
-            //    BankAccountBingETCTask babTask = new BankAccountBingETCTask();
-            //    babTask.Start();
-            //});
+            Task.Run(() =>
+            {
+                BankAccountBingETCTask babTask = new BankAccountBingETCTask();
+                babTask.Start();
+            });
 
             Application app = new Application();
             MainWindow win = new MainWindow();

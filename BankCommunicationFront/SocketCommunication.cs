@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -391,8 +392,8 @@ namespace BankCommunicationFront
             catch (Exception ex)
             {
                 ShowMessage.GetFrontMessageInstance().PrintLog(new MessageLog() { BankName = requestInfo.BankAgent == null ? "" : requestInfo.BankAgent.BankName, MessageLevel = ErrorLevel.致命.ToString(), SndTime = DateTime.Now.ToString(SystemSetInfo.SqlfmtDateTime), MessageContent = "通信前置系统报文接收模块异常：" + ex.Message.ToString() });
-                pf.BackUpFile(requestInfo.FileName, SYSConstant.sParam.Find(p => p.Key == "PATH_BACKUP_FIELDRCV").Value + requestInfo.BankAgent == null ? "" : requestInfo.BankAgent.BankName + "\\", SYSConstant.sParam.Find(p => p.Key == "PATH_RECEIVE").Value);// 将ftp文件移动（若已下载到本地）至异常目录下
-                pf.BackUpFile(requestInfo.FileName.Split('.')[0] + ".txt", SYSConstant.sParam.Find(p => p.Key == "PATH_BACKUP_FIELDRCV").Value + requestInfo.BankAgent == null ? "" : requestInfo.BankAgent.BankName + "\\", SYSConstant.sParam.Find(p => p.Key == "PATH_RECEIVE").Value);
+                pf.BackUpFile(requestInfo.FileName, SYSConstant.sParam.Find(p => p.Key == "PATH_BACKUP_FIELDRCV").Value + (requestInfo.BankAgent == null ? "" : requestInfo.BankAgent.BankName + "\\"), SYSConstant.sParam.Find(p => p.Key == "PATH_RECEIVE").Value);// 将ftp文件移动（若已下载到本地）至异常目录下
+                pf.BackUpFile(requestInfo.FileName.Split('.')[0] + ".txt", SYSConstant.sParam.Find(p => p.Key == "PATH_BACKUP_FIELDRCV").Value + (requestInfo.BankAgent == null ? "" : requestInfo.BankAgent.BankName + "\\"), SYSConstant.sParam.Find(p => p.Key == "PATH_RECEIVE").Value);
                 LogMessage.GetLogInstance().LogError("通信前置系统报文接收模块异常：" + ex.ToString());
                 session.Close();
             }
@@ -437,12 +438,14 @@ namespace BankCommunicationFront
 
         /// <summary>
         /// 解密并校验文件
+        /// MethodImpl特性：互斥锁，避免多个大文件并发处理是内存溢出。
         /// </summary>
         /// <param name="inFile">源文件（带路径）</param>
         /// <param name="outFile">解密后的文件（带路径）</param>
         /// <param name="bankName">银行名称</param>
         /// <param name="content">包内容</param>
         /// <returns>bool</returns>
+        [System.Runtime.CompilerServices.MethodImpl(MethodImplOptions.Synchronized)]
         public bool VerifyFileContent(string inFile, string outFile, string bankName, string key, out string[] contentLines)
         {
             DESEncrypt des = new DESEncrypt(key);
@@ -554,8 +557,8 @@ namespace BankCommunicationFront
 
                 StringBuilder sb = new StringBuilder();
                 sb.Append("银行返回扣款结果文件" + requestInfo.FileName + "包含" + transInfos.Count + @"笔交易，");
-                sb.Append("其中扣款成功" + transInfos.FindAll(p => p.Result == 0).Count + "笔，金额：" + transInfos.FindAll(p => p.Result == 0).Sum(p => p.Income / 100) + @"元，");
-                sb.Append("扣款失败" + transInfos.FindAll(p => p.Result != 0).Count + "笔，金额：" + transInfos.FindAll(p => p.Result != 0).Sum(p => p.Income / 100) + "元");
+                sb.Append("其中扣款成功" + transInfos.FindAll(p => p.Result == 0).Count + "笔，金额：" + transInfos.FindAll(p => p.Result == 0).Sum(p => p.Income / 100.00) + @"元，");
+                sb.Append("扣款失败" + transInfos.FindAll(p => p.Result != 0).Count + "笔，金额：" + transInfos.FindAll(p => p.Result != 0).Sum(p => p.Income / 100.00) + "元");
                 new LogMessage(requestInfo.BankAgent.BankNo).LogInfo(sb.ToString());
                 report = new Tuple<int, int, int, int>(transInfos.FindAll(p => p.Result == 0).Count, transInfos.FindAll(p => p.Result == 0).Sum(p => p.Income),
                    transInfos.FindAll(p => p.Result != 0).Count, transInfos.FindAll(p => p.Result != 0).Sum(p => p.Income));
