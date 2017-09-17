@@ -133,16 +133,16 @@ namespace BankCommunicationFront
             try
             {
                 MongoDBAccess<InPutTaskWaitingDone> mongoAccess = new MongoDBAccess<InPutTaskWaitingDone>(SYSConstant.BANK_TASK, SYSConstant.INPUTTASK_WAITING_DONE);
-                mongoAccess.FindAsByWhere(p => p.Status < 0, 0).ForEach(p =>
+                mongoAccess.FindAsByWhere(p => p.Status < 0 && p.CreateTime > DateTime.Now.AddDays(-1).Date, 0).ForEach(p =>
                 {
                     exceptionCollection.Add(new ExceptionTaskWaitingDone() { _id = p._id, BankTag = p.BankTag, TransType = p.TransType, DbName = p.DbName, ColName = p.ColName, FileName = p.FileName, Status = p.Status, CreateTime = p.CreateTime, Remark = p.Remark, Key = p.Key, OperationType = "银行发送扣款结果包异常数据" });
                 });
 
-                MongoDBAccess<OutPutTaskWaitingDone> access = new MongoDBAccess<OutPutTaskWaitingDone>(SYSConstant.BANK_TASK, SYSConstant.INPUTTASK_WAITING_DONE);
-                access.FindAsByWhere(p => p.Status < 0, 0).ForEach(p =>
-                {
-                    exceptionCollection.Add(new ExceptionTaskWaitingDone() { _id = p._id, BankTag = p.BankTag, TransType = p.TransType, DbName = p.DbName, ColName = p.ColName, FileName = p.FileName, Status = p.Status, CreateTime = p.CreateTime, Remark = p.Remark, Key = p.Key, OperationType = "结算中心发送扣款包异常数据" });
-                });
+                //MongoDBAccess<OutPutTaskWaitingDone> access = new MongoDBAccess<OutPutTaskWaitingDone>(SYSConstant.BANK_TASK, SYSConstant.INPUTTASK_WAITING_DONE);
+                //access.FindAsByWhere(p => p.Status < 0 && p.CreateTime > DateTime.Now.AddDays(-1).Date, 0).ForEach(p =>
+                //{
+                //    exceptionCollection.Add(new ExceptionTaskWaitingDone() { _id = p._id, BankTag = p.BankTag, TransType = p.TransType, DbName = p.DbName, ColName = p.ColName, FileName = p.FileName, Status = p.Status, CreateTime = p.CreateTime, Remark = p.Remark, Key = p.Key, OperationType = "结算中心发送扣款包异常数据" });
+                //});
             }
             catch (Exception ex)
             {

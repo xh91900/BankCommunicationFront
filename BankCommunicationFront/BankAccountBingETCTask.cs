@@ -67,7 +67,7 @@ namespace BankCommunicationFront
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 LogMessage.GetLogInstance().LogError("银行账号与ETC卡绑定信息（2008号报文）定时发送任务异常：" + ex.ToString());
             }

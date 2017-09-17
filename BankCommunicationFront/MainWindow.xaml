@@ -234,7 +234,6 @@
                                 <DataGridTextColumn Header="异常信息" Width="*" Binding="{Binding Remark}" />
                             </DataGrid.Columns>
                         </DataGrid>
-                        <Button x:Name="Button_RepeatOnce" Content="更新系统配置" Click="Button_GetSpara_Click"/>
                     </StackPanel>
                 </TabItem>
             </TabControl>
