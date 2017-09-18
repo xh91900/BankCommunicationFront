@@ -184,23 +184,23 @@ namespace BankCommunicationFront
         {
             try
             {
-                string content = string.Empty;
+                StringBuilder content = new StringBuilder();
                 fileName = string.Format("0{0}{1}{2}.txt", SystemSetInfo.SettleCenterCode, bankAgent.BankNo, DateTime.Now.ToString(SystemSetInfo.DatefmtyyyyMMddHHMMSS));
                 StreamWriter writer = null;
                 FileStream fileStream = null;
                 fileStream = File.Create(SYSConstant.sParam.Find(p => p.Key == "PATH_SND").Value + fileName);
                 writer = new StreamWriter(fileStream, System.Text.Encoding.GetEncoding("GBK"));
-                content = string.Format("0|{0}|{1}|{2}|{3}|{4}|\n", fileName.Split('.')[0] + ".CCF", SystemSetInfo.SettleCenterCode, bankAgent.BankNo, DateTime.Now.ToString(SystemSetInfo.DatefmtyyyyMMddHHMMSS), "1");
+                content.Append(string.Format("0|{0}|{1}|{2}|{3}|{4}|\n", fileName.Split('.')[0] + ".CCF", SystemSetInfo.SettleCenterCode, bankAgent.BankNo, DateTime.Now.ToString(SystemSetInfo.DatefmtyyyyMMddHHMMSS), "1"));
                 writer.Write(content);
 
-                content += string.Format("{0}|{1}|i|\n", (int)transType, accountCancelList.Count);
+                content.Append(string.Format("{0}|{1}|i|\n", (int)transType, accountCancelList.Count));
                 writer.Write(string.Format("{0}|{1}|i|\n", (int)transType, accountCancelList.Count));
                 if (transType == ETransType.解约信息)
                 {
                     foreach (BankAccountCancel info in accountCancelList)
                     {
                         string data = info._id + "|" + info.GenTime.ToString(SystemSetInfo.DatefmtyyyyMMddHHMMSS) + "|" + info.AccountId + "|" + info.AccountName + "|";
-                        content += data + "\n";
+                        content.Append(data + "\n");
                         writer.Write(data + "\n");
                     }
                 }
@@ -209,12 +209,12 @@ namespace BankCommunicationFront
                     foreach (BankAccountCancel info in accountCancelList)
                     {
                         string data = info._id + "|" + info.GenTime.ToString(SystemSetInfo.DatefmtyyyyMMddHHMMSS) + "|" + info.AccountId + "|" + info.AccountName + "|" + info.PlateNumbers + "|" + (decimal.Parse(info.CashDepositCut.ToString()) / 100).ToString("F2") + "|";
-                        content += data;
+                        content.Append(data + "\n");
                         writer.Write(data + "\n");
                     }
                 }
                 DESEncrypt des = new DESEncrypt(key);
-                writer.Write(DESEncrypt.GetCRC(Encoding.GetEncoding("GBK").GetBytes(content)));
+                writer.Write(DESEncrypt.GetCRC(Encoding.GetEncoding("GBK").GetBytes(content.ToString())));
                 writer.Flush();
                 writer.Close();
                 fileStream.Close();

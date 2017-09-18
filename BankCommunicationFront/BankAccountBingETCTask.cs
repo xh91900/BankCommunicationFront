@@ -62,6 +62,19 @@ namespace BankCommunicationFront
                     MongoDBAccess<BankAgent> mongoBankAccess = new MongoDBAccess<BankAgent>(SYSConstant.BANK_CONFIG, SYSConstant.BANK_AGENT);
                     foreach (OutPutTaskWaitingDone waitingDone in waitingDoneList)
                     {
+                        if (waitingDone.CreateTime.Date != DateTime.Now.Date)
+                        {
+                            var mUpDefinitionBuilder = new UpdateDefinitionBuilder<OutPutTaskWaitingDone>();
+                            var mUpdateDefinition = mUpDefinitionBuilder.Set(p => p.Status, 1).Set(p => p.SendTime, DateTime.Now.AddHours(8));
+                            mongoAccess.UpdateDocs(p => p._id == waitingDone._id, mUpdateDefinition);
+                            if (!string.IsNullOrEmpty(waitingDone.ColName))
+                            {
+                                new MongoDBAccess<BankAccountidCardNo>(SYSConstant.BANK_ACCOUNTID_CARDNO, waitingDone.ColName).DropCollection(waitingDone.ColName);
+                            }
+                            LogMessage.GetLogInstance().LogError("银行账号与ETC卡绑定信息定时发送任务异常：交易包" + waitingDone._id + "是前一天生成的扣款文件，不发送给银行扣款");
+                            continue;
+                        }
+
                         BankAgent bankAgent = mongoBankAccess.FindAsByWhere(p => p.BankTag.Equals(waitingDone.BankTag), 0).FirstOrDefault();
                         new SingleBankAccountBingETCTask(bankAgent).ProcessSingleTask(waitingDone);
                     }
@@ -158,25 +171,25 @@ namespace BankCommunicationFront
         {
             try
             {
-                string content = string.Empty;
+                StringBuilder content = new StringBuilder();
                 fileName = string.Format("0{0}{1}{2}.txt", SystemSetInfo.SettleCenterCode, bankAgent.BankNo, DateTime.Now.ToString(SystemSetInfo.DatefmtyyyyMMddHHMMSS));
                 StreamWriter writer = null;
                 FileStream fileStream = null;
                 fileStream = File.Create(SYSConstant.sParam.Find(p => p.Key == "PATH_SND").Value + fileName);
                 writer = new StreamWriter(fileStream, System.Text.Encoding.GetEncoding("GBK"));
-                content = string.Format("0|{0}|{1}|{2}|{3}|{4}|\n", fileName.Split('.')[0] + ".CCF", SystemSetInfo.SettleCenterCode, bankAgent.BankNo, DateTime.Now.ToString(SystemSetInfo.DatefmtyyyyMMddHHMMSS), "1");
+                content.Append(string.Format("0|{0}|{1}|{2}|{3}|{4}|\n", fileName.Split('.')[0] + ".CCF", SystemSetInfo.SettleCenterCode, bankAgent.BankNo, DateTime.Now.ToString(SystemSetInfo.DatefmtyyyyMMddHHMMSS), "1"));
                 writer.Write(content);
 
-                content += string.Format("{0}|{1}|i|\n", transType, infoList.Count);
+                content.Append(string.Format("{0}|{1}|i|\n", transType, infoList.Count));
                 writer.Write(string.Format("{0}|{1}|i|\n", transType, infoList.Count));
                 foreach (BankAccountidCardNo info in infoList)
                 {
                     string data = info._id + "|" + DateTime.Now.ToString(SystemSetInfo.DatefmtyyyyMMddHHMMSS) + "|" + info.AccountId + "|" + info.JtcardId + "|" + info.CardStatus + "|";
-                    content += data + "\n";
+                    content.Append(data + "\n");
                     writer.Write(data + "\n");
                 }
                 DESEncrypt des = new DESEncrypt(key);
-                writer.Write(DESEncrypt.GetCRC(Encoding.GetEncoding("GBK").GetBytes(content)));
+                writer.Write(DESEncrypt.GetCRC(Encoding.GetEncoding("GBK").GetBytes(content.ToString())));
 
                 writer.Flush();
                 writer.Close();

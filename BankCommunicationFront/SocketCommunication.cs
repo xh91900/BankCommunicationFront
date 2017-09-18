@@ -193,39 +193,46 @@ namespace BankCommunicationFront
         // 启动本地监听
         public void SetUp()
         {
-            ServerConfig config = new ServerConfig()
+            try
             {
-                Port = int.Parse(SYSConstant.sParam.Find(p => p.Key == "F_ServerConfig_Port").Value),//服务器监听的端口
-                ListenBacklog = 2001,// 监听队列的大小
-                MaxConnectionNumber = 50000,// 可允许连接的最大连接数
-                ReceiveBufferSize = 1024,// 接收缓冲区大小
-                MaxRequestLength = 10240// 最大允许的请求长度，默认值为1024;
-            };
+                ServerConfig config = new ServerConfig()
+                {
+                    Port = int.Parse(SYSConstant.sParam.Find(p => p.Key == "F_ServerConfig_Port").Value),//服务器监听的端口
+                    ListenBacklog = 2001,// 监听队列的大小
+                    MaxConnectionNumber = 50000,// 可允许连接的最大连接数
+                    ReceiveBufferSize = 1024,// 接收缓冲区大小
+                    MaxRequestLength = 10240// 最大允许的请求长度，默认值为1024;
+                };
 
-            BankBatchServer server = new BankBatchServer();
-            if (!server.Setup(config))
-            {
-                LogMessage.GetLogInstance().LogError("本地网络监听启动失败，端口：" + config.Port);
-                return;
+                BankBatchServer server = new BankBatchServer();
+                if (!server.Setup(config))
+                {
+                    LogMessage.GetLogInstance().LogError("本地网络监听启动失败，端口：" + config.Port);
+                    return;
+                }
+                if (!server.Start())
+                {
+                    LogMessage.GetLogInstance().LogError("本地网络监听启动失败，端口：" + config.Port);
+                    return;
+                }
+
+                server.NewSessionConnected += Server_NewSessionConnected;
+                server.NewRequestReceived += Server_NewRequestReceived;
+                server.SessionClosed += Server_SessionClosed;
+
+                LogMessage.GetLogInstance().LogInfo("本地网络监听启动成功，端口：" + config.Port + server.State.ToString());
+
+                while (Console.ReadLine() != "Q")
+                {
+                    continue;
+                }
+
+                server.Stop();
             }
-            if (!server.Start())
+            catch (Exception ex)
             {
-                LogMessage.GetLogInstance().LogError("本地网络监听启动失败，端口：" + config.Port);
-                return;
+                LogMessage.GetLogInstance().LogWarn("监听本地端口失败：" + ex.ToString());
             }
-
-            server.NewSessionConnected += Server_NewSessionConnected;
-            server.NewRequestReceived += Server_NewRequestReceived;
-            server.SessionClosed += Server_SessionClosed;
-
-            LogMessage.GetLogInstance().LogInfo("本地网络监听启动成功，端口：" + config.Port + server.State.ToString());
-
-            while (Console.ReadLine() != "Q")
-            {
-                continue;
-            }
-
-            server.Stop();
         }
 
         /// <summary>

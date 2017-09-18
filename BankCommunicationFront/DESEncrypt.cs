@@ -47,9 +47,16 @@ namespace BankCommunicationFront
         /// <returns>bool</returns>
         public bool Encrypt(string inFileName, string outFileName)
         {
-            //返回值0表示加密成功，-1加密失败
-            int result = CPPDLL.RunDesFile(inFileName, outFileName, 0, 1, Key, keylen);
-            return result >= 0;
+            try
+            {
+                //返回值0表示加密成功，-1加密失败
+                int result = CPPDLL.RunDesFile(inFileName, outFileName, 0, 1, Key, keylen);
+                return result >= 0;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
         }
 
         /// <summary>
@@ -60,8 +67,15 @@ namespace BankCommunicationFront
         /// <returns>bool</returns>
         public bool Decrypt(string inFileName, string outFileName)
         {
-            int result = CPPDLL.RunDesFile(inFileName, outFileName, 1, 1, Key, keylen);
-            return result >= 0;   
+            try
+            {
+                int result = CPPDLL.RunDesFile(inFileName, outFileName, 1, 1, Key, keylen);
+                return result >= 0;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
         }
 
         /// <summary>
@@ -84,8 +98,7 @@ namespace BankCommunicationFront
             }
             catch (AccessViolationException e)
             {
-                LogMessage.GetLogInstance().LogError(e.ToString());
-                throw;
+                throw e;
             }
         }
 
